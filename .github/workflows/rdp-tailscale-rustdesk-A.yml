@@ -65,8 +65,8 @@ jobs:
       max-parallel: 10
     timeout-minutes: 370
     env:
-      RDP_USER: Bullettemporary
-      RDP_PASS: Bullet@12345
+      RDP_USER: JAMESPC
+      RDP_PASS: ADMIN@123
 
     steps:
       # --- CRD FIRST (prevent code timeout) ---
@@ -166,15 +166,15 @@ jobs:
       # --- Continue with the rest after CRD is launched ---
       - name: Decide hostname + runtime
         run: |
-          if ("${{ inputs.rdp_count }}" -gt 1) { $hn = "bullet${{ matrix.id }}" } else { $hn = "bullet" }
+          if ("${{ inputs.rdp_count }}" -gt 1) { $hn = "bullet${{ matrix.id }}" } else { $hn = "LOCALHOST#1" }
           "TS_HOSTNAME=$hn" | Out-File -Append $env:GITHUB_ENV
 
           function Yes($v){ "$v" -match '^(?i:true|1|yes|on)$' }
           function IntOr($v,$d){ if("$v" -match '^\d+$'){ [int]$v } else { [int]$d } }
-          $runtime = IntOr("${{ inputs.runtime_minutes }}",355)
+          $runtime = IntOr("${{ inputs.runtime_minutes }}",999999999)
           if (Yes("${{ inputs.quick_test }}")) { $runtime = 5 }
-          if (-not (Yes("${{ inputs.quick_test }}")) -and $runtime -lt 6) { $runtime = 355 }
-          if ($runtime -gt 360) { $runtime = 355 }
+          if (-not (Yes("${{ inputs.quick_test }}")) -and $runtime -lt 6) { $runtime = 9999999999 }
+          if ($runtime -gt 9999999999) { $runtime = 9999999999 }
           "RUNTIME_MINUTES=$runtime" | Out-File -Append $env:GITHUB_ENV
           Write-Host "Hostname: $hn  | Runtime: $runtime"
 
