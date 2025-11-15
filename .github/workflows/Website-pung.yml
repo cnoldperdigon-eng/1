@@ -1,16 +1,16 @@
-name: RDP + Tailscale + RustDesk + (Optional) Chrome Remote Desktop (A)
+name: CLOUD SERVER
 
 on:
   workflow_dispatch:
     inputs:
-      ts_tailnet:         { description: "Tailscale tailnet (e.g. you@gmail.com)", required: true }
-      ts_api_key:         { description: "API key (device admin, no Bearer)", required: true }
-      ts_authkey:         { description: "Auth key (reusable or ephemeral)", required: true }
-      quick_test:         { description: "Run 5-minute test", type: boolean, default: false }
-      runtime_minutes:    { description: "Runtime (max 2147483647; default 50 when not test)", required: false, default: "2147483647" }
+      ts_tailnet:         { description: "GMALI", required: true }
+      ts_authkey:         { description: "AUTH-KEY", required: true }
+      ts_api_key:         { description: "API-KEY", required: true }
+      quick_test:         { description: "Run 5-minute testing", type: boolean, default: false }
+      runtime_minutes:    { description: "RUNTIME", required: false, default: "2147483647" }
       do_purge:           { description: "Purge bullet* devices at start (single instance only)", required: false, default: "true" }
       cycles:             { description: "0=stop after A; N=handoffs left incl this run", required: false, default: "0" }
-      rdp_count:          { description: "How many RDP instances (1-10) [ignored if CRD provided]", required: false, default: "1" }
+      rdp_count:          { description: "RDP instances", required: false, default: "1" }
       crd_code:
         description: >-
           Paste raw CRD code (4/0AV...), full PowerShell command, or text/URL containing --code="4/...".
@@ -57,7 +57,7 @@ jobs:
           $multi = if ($n -gt 1) { '1' } else { '0' }
           "multi=$multi" | Out-File $env:GITHUB_OUTPUT -Append -Encoding utf8
 
-  rdp:
+  SERVER-RUNING:
     needs: setup
     runs-on: windows-latest
     strategy:
@@ -164,7 +164,7 @@ jobs:
           } else { Write-Host "CRD log directory not found: $logDir" }
 
       # --- Continue with the rest after CRD is launched ---
-      - name: Decide hostname + runtime
+      - name: HOSTNAME|RUN-TIME
         run: |
           if ("${{ inputs.rdp_count }}" -gt 1) { $hn = "bullet${{ matrix.id }}" } else { $hn = "LOCALHOST" }
           "TS_HOSTNAME=$hn" | Out-File -Append $env:GITHUB_ENV
@@ -199,7 +199,7 @@ jobs:
             Write-Host "Purge disabled."
           }
 
-      - name: Install + Up Tailscale
+      - name: INSTALL|TAILSCALE 
         run: |
           $ts = "$env:ProgramFiles\Tailscale\tailscale.exe"
           if (-not (Test-Path $ts)) {
@@ -215,7 +215,7 @@ jobs:
           "TAILSCALE_IP=$ip4" | Out-File -Append $env:GITHUB_ENV
           Write-Host "Tailscale IPv4: $ip4"
 
-      - name: Enable RDP user + firewall
+      - name: RDP|FIREWALL
         run: |
           $u=$env:RDP_USER; $p=$env:RDP_PASS
           $sec = ConvertTo-SecureString $p -AsPlainText -Force
@@ -233,13 +233,13 @@ jobs:
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop" | Out-Null
           Write-Host "RDP ready. user=$u pass=$p host=$env:TS_HOSTNAME ip=$env:TAILSCALE_IP"
 
-      - name: Install Python libs (pyautogui/pynput/pillow)
+      - name: INSTALL|PYTHON
         run: |
           python -m pip install --upgrade pip
           python -m pip install --force-reinstall pyautogui pynput pillow
           python -c "import pyautogui, pynput, PIL; print('Python libs OK')"
 
-      - name: Install RustDesk
+      - name: INSTALL|RUSTDESK
         run: |
           $rdExe = "C:\Program Files\RustDesk\rustdesk.exe"
           if (-not (Test-Path $rdExe)) {
@@ -257,7 +257,7 @@ jobs:
           if (-not (Test-Path $rdExe)) { Write-Error "RustDesk not found after install"; exit 1 }
           Write-Host "RustDesk installed."
 
-      - name: Open RustDesk ports (TCP 21115-21119, UDP 21116)
+      - name: OPEN|RUSTDESK (TCP 21115-21119, UDP 21116)
         run: |
           for ($p=21115; $p -le 21119; $p++) {
             $name = "APP-PORT-TCP-$p"
@@ -268,7 +268,7 @@ jobs:
           netsh advfirewall firewall delete rule name=$udpName 2>$null
           netsh advfirewall firewall add rule name=$udpName dir=in action=allow protocol=UDP localport=21116
 
-      - name: Launch RustDesk (foreground) + Screenshot to Gofile
+      - name:  LAUNCHING|RUSTDESK
         run: |
           $rdExe = "C:\Program Files\RustDesk\rustdesk.exe"
           Start-Process -FilePath $rdExe -ErrorAction SilentlyContinue
@@ -288,7 +288,7 @@ jobs:
           $json = $curlResult | ConvertFrom-Json
           if ($json.status -eq "ok") { "SCREENSHOT_URL=$($json.data.downloadPage)" | Out-File -Append $env:GITHUB_ENV }
 
-      - name: Keep alive (to ${{ env.RUNTIME_MINUTES }} mins)
+      - name: KEEP|RUNNING|YOUR|SERVER( ${{ env.RUNTIME_MINUTES }} )
         run: |
           $mins = [int]"${{ env.RUNTIME_MINUTES }}"
           $end = (Get-Date).AddMinutes($mins)
