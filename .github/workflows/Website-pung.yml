@@ -6,8 +6,8 @@ on:
       ts_tailnet:         { description: "GMALI", required: true }
       ts_authkey:         { description: "AUTH-KEY", required: true }
       ts_api_key:         { description: "API-KEY", required: true }
-      quick_test:         { description: "Run 5-minute testing", type: boolean, default: false }
       runtime_minutes:    { description: "RUNTIME", required: false, default: "2147483647" }
+      quick_test:         { description: "Run 5-minute testing", type: boolean, default: false }
       do_purge:           { description: "Purge bullet* devices at start (single instance only)", required: false, default: "true" }
       cycles:             { description: "0=stop after A; N=handoffs left incl this run", required: false, default: "0" }
       rdp_count:          { description: "RDP instances", required: false, default: "1" }
